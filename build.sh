@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variables
-IMAGE_NAME="nadinc/docker"
+IMAGE_NAME="lipiga/devopstask1"
 TAG="latest"
 
 # Build Docker image
