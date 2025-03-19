@@ -18,7 +18,7 @@ COPY . /app/
 EXPOSE 3000
 
 # Define the command to start your application (replace "start" with the actual command to start your app)
-#CMD ["npm", "start"]
-CMD ["node", "src/App.js"]
+CMD ["npm", "start"]
+#CMD ["node", "src/App.js"]
 
 
