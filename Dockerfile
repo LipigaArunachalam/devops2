@@ -1,27 +1,21 @@
-# Use full Node.js image to avoid Alpine-related issues
-FROM node:20 
+# Use Node.js Alpine base image
+FROM node:alpine
 
-# Set the working directory
+# Create and set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json before installing dependencies
+# Copy package.json and package-lock.json to the working directory
 COPY package.json package-lock.json /app/
 
-# Clean cache and install dependencies
-RUN npm cache clean --force
+# Install dependencies
 RUN npm install
 
-# Copy the entire project
-COPY . .
+# Copy the entire codebase to the working directory
+COPY . /app/
 
-# Build the React app
-RUN npm run build
+# Expose the port your app runs on (replace <PORT_NUMBER> with your app's actual port)
+EXPOSE 3000
 
-# Install a static server to serve the React app
-RUN npm install -g serve
+# Define the command to start your application (replace "start" with the actual command to start your app)
+CMD ["npm", "start"]
 
-# Expose the correct port
-EXPOSE 4000
-
-# Serve the built React app
-CMD ["serve", "-s", "build", "-l", "4000"]
