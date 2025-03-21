@@ -1,0 +1,57 @@
+/* Center the counter app */
+.container {
+  text-align: center;
+  padding: 40px;
+  background: linear-gradient(to right, #ff9966, #ff5e62);
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: "Arial", sans-serif;
+}
+
+/* Counter number styling */
+.counter-display {
+  font-size: 4rem;
+  font-weight: bold;
+  margin: 20px;
+  padding: 15px 30px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+/* Button styling */
+.button-group {
+  display: flex;
+  gap: 20px;
+}
+
+.btn {
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.add {
+  background-color: #28a745;
+  color: white;
+}
+
+.add:hover {
+  background-color: #218838;
+}
+
+.subtract {
+  background-color: #dc3545;
+  color: white;
+}
+
+.subtract:hover {
+  background-color: #c82333;
+}
