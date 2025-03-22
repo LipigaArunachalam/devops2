@@ -1,10 +1,14 @@
 pipeline {
-
     agent any
 
     tools {
         jdk 'jdk17'
         nodejs 'node20'
+    }
+
+    environment {
+        IMAGE_NAME = 'immanuvel12/react-app'
+        CONTAINER_NAME = 'react_container'
     }
 
     stages {
@@ -32,14 +36,12 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    cd react-app  # Change to the correct React.js project directory
-
                     if [ -f package.json ]; then
-                        echo "package.json found. Installing dependencies..."
+                        echo "Installing dependencies..."
                         npm install
-                        npm run build  # Build React for production
+                        npm run build
                     else
-                        echo "ERROR: package.json is missing in react-app. Skipping build."
+                        echo "ERROR: package.json not found!"
                         exit 1
                     fi
                     '''
@@ -51,14 +53,12 @@ pipeline {
             steps {
                 script {
                     withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
-                        def imageName = "immanuvel12/react-app"
                         def tag = "latest"
 
                         sh """
-                        cd react-app  # Ensure the correct build context
-                        docker build -t ${imageName} .
-                        docker tag ${imageName} ${imageName}:${tag}
-                        docker push ${imageName}:${tag}
+                        docker build -t ${IMAGE_NAME} .
+                        docker tag ${IMAGE_NAME} ${IMAGE_NAME}:${tag}
+                        docker push ${IMAGE_NAME}:${tag}
                         """
                     }
                 }
@@ -68,22 +68,13 @@ pipeline {
         stage('Deploy Docker Container') {
             steps {
                 script {
-                    def containerName = "react_container"
-                    def imageName = "immanuvel12/react-app:latest"
-
-                    // Stop and remove the existing container if running
                     sh """
-                    docker stop ${containerName} || true
-                    docker rm ${containerName} || true
-                    """
-
-                    // Run the new container (React apps usually run with nginx or serve)
-                    sh """
-                    docker run -d --name ${containerName} -p 3000:3000 ${imageName}
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm ${CONTAINER_NAME} || true
+                    docker run -d --name ${CONTAINER_NAME} -p 80:80 ${IMAGE_NAME}:latest
                     """
                 }
             }
         }
-
     }
 }
