@@ -1,79 +1,32 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'jdk17'
-        nodejs 'node20'
-    }
-
     environment {
-        IMAGE_NAME = 'lipiga/devopstask1'
-        CONTAINER_NAME = 'react_container'
-        APP_PORT = '3003'
+        IMAGE_NAME = 'my-react-app'
+        CONTAINER_NAME = 'react-container'
+        PORT = '3003'
     }
 
     stages {
+        stage('Clone Repository') {
+            steps {
+                git 'https://github.com/yourusername/your-repo.git'
+            }
+        }
 
-        stage('Clean Workspace') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    echo "Cleaning workspace..."
-                    deleteDir()
+                    sh 'docker build -t $IMAGE_NAME .'
                 }
             }
         }
 
-        stage('Git Checkout') {
+        stage('Run Container') {
             steps {
                 script {
-                    git branch: 'main',
-                        credentialsId: 'github_secret',
-                        url: 'https://github.com/LipigaArunachalam/devops2.git'
-                }
-            }
-        }
-
-        stage('Install Dependencies & Build') {
-            steps {
-                script {
-                    sh '''
-                    if [ -f package.json ]; then
-                        echo "Installing dependencies..."
-                        npm install
-                        npm run build
-                    else
-                        echo "ERROR: package.json not found!"
-                        exit 1
-                    fi
-                    '''
-                }
-            }
-        }
-
-        stage('Docker Build & Push') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
-                        def tag = "latest"
-
-                        sh """
-                        docker build -t ${IMAGE_NAME} .
-                        docker tag ${IMAGE_NAME} ${IMAGE_NAME}:${tag}
-                        docker push ${IMAGE_NAME}:${tag}
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Deploy Docker Container') {
-            steps {
-                script {
-                    sh """
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
-                    docker run -d --name ${CONTAINER_NAME} -p ${APP_PORT}:3000 ${IMAGE_NAME}:latest
-                    """
+                    sh 'docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true'
+                    sh 'docker run -d -p $PORT:3003 --name $CONTAINER_NAME $IMAGE_NAME'
                 }
             }
         }
