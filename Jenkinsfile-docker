@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'my-react-app'
+        REPO_URL = 'https://github.com/LipigaArunachalam/devops2.git'
+        IMAGE_NAME = 'lipiga/devopstask1'  // Updated Docker repository
         CONTAINER_NAME = 'react-container'
         PORT = '3003'
     }
@@ -10,7 +11,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/yourusername/your-repo.git'
+                git branch: 'main', credentialsId: 'github_seccred2', url: REPO_URL
             }
         }
 
@@ -22,7 +23,25 @@ pipeline {
             }
         }
 
-        stage('Run Container') {
+        stage('Login to DockerHub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'github_seccred2', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                    }
+                }
+            }
+        }
+
+        stage('Push Image to DockerHub') {
+            steps {
+                script {
+                    sh 'docker push $IMAGE_NAME'
+                }
+            }
+        }
+
+        stage('Deploy Container') {
             steps {
                 script {
                     sh 'docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true'
