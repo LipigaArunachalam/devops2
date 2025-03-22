@@ -24,3 +24,4 @@ EXPOSE 3003
 
 # Start the app
 CMD ["serve", "-s", "build", "-l", "3003"]
+
