@@ -1,20 +1,26 @@
-# Use Node.js Alpine base image
-FROM node:alpine
+# Use Node.js as the base image
+FROM node:18
 
-# Create and set the working directory inside the container
+# Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
-COPY package.json package-lock.json /app/
+# Copy package.json and package-lock.json
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the entire codebase to the working directory
-COPY . /app/
+# Copy the project files
+COPY . .
 
-# Expose the port your app runs on (default: 3000 inside the container)
-EXPOSE 3000
+# Build the React app
+RUN npm run build
 
-# Define the command to start your application
-CMD ["npm", "start"]
+# Install a simple HTTP server to serve the build
+RUN npm install -g serve
+
+# Expose port 3003
+EXPOSE 3003
+
+# Start the app
+CMD ["serve", "-s", "build", "-l", "3003"]
