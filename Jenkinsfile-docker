@@ -1,72 +1,89 @@
-pipeline{
+pipeline {
+
     agent any
-    tools{
+
+    tools {
         jdk 'jdk17'
-        nodejs 'node16'
+        nodejs 'node20'
     }
-    environment {
-        SCANNER_HOME=tool 'sonar-scanner'
-    }
+
     stages {
-        stage('clean workspace'){
-            steps{
-                cleanWs()
-            }
-        }
-        stage('Checkout from Git'){
-            steps{
-                git branch: 'main', url: 'https://github.com/akaspatranobis/hotstar-clone-app-ci-cd-k8.git'
-            }
-        }
-        stage("Sonarqube Analysis "){
-            steps{
-                withSonarQubeEnv('sonar-server') {
-                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Hotstar \
-                    -Dsonar.projectKey=Hotstar'''
-                }
-            }
-        }
-        stage("quality gate"){
-           steps {
+
+        stage('Clean Workspace') {
+            steps {
                 script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                    echo "Cleaning workspace..."
+                    deleteDir()
                 }
             }
         }
-        stage('Install Dependencies') {
+
+        stage('Git Checkout') {
             steps {
-                sh "npm install"
+                script {
+                    git branch: 'main',
+                        credentialsId: 'github_secret',
+                        url: 'https://github.com/Immanuvel1207/Full-stack-demo.git'
+                }
             }
         }
-        
-        stage('TRIVY FS SCAN') {
+
+        stage('Install Dependencies & Build') {
             steps {
-                sh "trivy fs . > trivyfs.txt"
+                script {
+                    sh '''
+                    cd react-app  # Change to the correct React.js project directory
+
+                    if [ -f package.json ]; then
+                        echo "package.json found. Installing dependencies..."
+                        npm install
+                        npm run build  # Build React for production
+                    else
+                        echo "ERROR: package.json is missing in react-app. Skipping build."
+                        exit 1
+                    fi
+                    '''
+                }
             }
         }
-        stage("Docker Build & Push"){
-            steps{
-                script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
-                       sh "docker build -t hotstar ."
-                       sh "docker tag hotstar apatranobis59/hotstar:latest "
-                       sh "docker push apatranobis59/hotstar:latest"
+
+        stage('Docker Build & Push') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                        def imageName = "immanuvel12/react-app"
+                        def tag = "latest"
+
+                        sh """
+                        cd react-app  # Ensure the correct build context
+                        docker build -t ${imageName} .
+                        docker tag ${imageName} ${imageName}:${tag}
+                        docker push ${imageName}:${tag}
+                        """
                     }
                 }
             }
         }
-        stage("TRIVY"){
-            steps{
-                sh "trivy image apatranobis59/hotstar:latest > trivyimage.txt" 
+
+        stage('Deploy Docker Container') {
+            steps {
+                script {
+                    def containerName = "react_container"
+                    def imageName = "immanuvel12/react-app:latest"
+
+                    // Stop and remove the existing container if running
+                    sh """
+                    docker stop ${containerName} || true
+                    docker rm ${containerName} || true
+                    """
+
+                    // Run the new container (React apps usually run with nginx or serve)
+                    sh """
+                    docker run -d --name ${containerName} -p 3000:3000 ${imageName}
+                    """
+                }
             }
         }
-		
-		stage("deploy_docker"){
-				steps{
-					sh "docker run -d --name hotstar -p 3001:3000 apatranobis59/hotstar:latest"
-				}
-		}
-        
-        
+
     }
-} 
+}
